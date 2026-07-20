@@ -8,6 +8,7 @@ import React, { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mountReactHarness } from "../../hooks/domSelectionTestHarness";
 import { useTimelineRangeSelection } from "./useTimelineRangeSelection";
+import { getTimelineRowGeometry } from "./timelineLayout";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -60,7 +61,7 @@ function setup(): { handlers: () => Handlers; seekFromX: ReturnType<typeof vi.fn
   const isDragging = { current: false };
   const elementsRef = { current: [] };
   const trackOrderRef = { current: [] };
-  const rowHeightsRef = { current: [] };
+  const rowGeometryRef = { current: getTimelineRowGeometry([]) };
 
   function Probe(): null {
     latest = useTimelineRangeSelection({
@@ -75,7 +76,7 @@ function setup(): { handlers: () => Handlers; seekFromX: ReturnType<typeof vi.fn
       setShowPopover: vi.fn(),
       elementsRef,
       trackOrderRef,
-      rowHeightsRef,
+      rowGeometryRef,
       contentOrigin: 0,
     });
     return null;
