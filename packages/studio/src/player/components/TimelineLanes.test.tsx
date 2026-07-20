@@ -8,6 +8,7 @@ import { TimelineLanes } from "./TimelineLanes";
 import { getTrackStyle } from "./timelineIcons";
 import { defaultTimelineTheme } from "./timelineTheme";
 import { TRACK_H, getTimelineRowGeometry } from "./timelineLayout";
+import { createTimelineClipIndex } from "../lib/timelineClipIndex";
 import { usePlayerStore, type TimelineElement } from "../store/playerStore";
 import type { MultiDragPreviewInput } from "./timelineMultiDragPreview";
 import type { TimelineEditCallbacks } from "./timelineCallbacks";
@@ -93,6 +94,9 @@ function renderLanes(options: RenderLanesOptions = {}): {
           rowGeometry={getTimelineRowGeometry(rowHeights)}
           virtualRows={displayTrackOrder.map((_, index) => ({ index, rowKey: index }))}
           rowsVirtualized={false}
+          clipIndex={createTimelineClipIndex(tracks)}
+          renderTimeRange={{ start: 0, end: Number.POSITIVE_INFINITY }}
+          pinnedClipIdentities={new Set()}
           trackOrder={displayTrackOrder}
           tracks={tracks}
           trackStyles={new Map()}
