@@ -6,6 +6,8 @@ import type { TimelineKeyframeTarget } from "./timelineKeyframeIdentity";
 import type { TimelineTheme } from "./timelineTheme";
 import type { TrackVisualStyle } from "./timelineIcons";
 import type { DraggedClipState, ResizingClipState, BlockedClipState } from "./useTimelineClipDrag";
+import type { TimelineRowGeometry } from "./timelineLayout";
+import type { TimelineVirtualRow } from "./useTimelineVirtualRows";
 
 /**
  * Props shared by the scroll container ({@link import("./TimelineCanvas")}) and
@@ -22,6 +24,9 @@ export interface TimelineLaneBaseProps {
   theme: TimelineTheme;
   displayTrackOrder: number[];
   rowHeights: readonly number[];
+  rowGeometry: TimelineRowGeometry;
+  virtualRows: readonly TimelineVirtualRow[];
+  rowsVirtualized: boolean;
   trackOrder: number[];
   tracks: [number, TimelineElement[]][];
   trackStyles: Map<number, TrackVisualStyle>;

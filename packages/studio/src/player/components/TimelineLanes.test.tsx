@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { TimelineLanes } from "./TimelineLanes";
 import { getTrackStyle } from "./timelineIcons";
 import { defaultTimelineTheme } from "./timelineTheme";
-import { TRACK_H } from "./timelineLayout";
+import { TRACK_H, getTimelineRowGeometry } from "./timelineLayout";
 import { usePlayerStore, type TimelineElement } from "../store/playerStore";
 import type { MultiDragPreviewInput } from "./timelineMultiDragPreview";
 import type { TimelineEditCallbacks } from "./timelineCallbacks";
@@ -78,6 +78,7 @@ function renderLanes(options: RenderLanesOptions = {}): {
     const laneCounts = new Map(
       elements.map((el) => [el.id, (gsapAnimations.get(el.id) ?? []).length]),
     );
+    const rowHeights = displayTrackOrder.map(() => TRACK_H);
     act(() => {
       usePlayerStore.setState({ expandedClipIds: new Set(next.expandedClipIds ?? []) });
       root.render(
@@ -88,7 +89,10 @@ function renderLanes(options: RenderLanesOptions = {}): {
           trackContentWidth={800}
           theme={defaultTimelineTheme}
           displayTrackOrder={displayTrackOrder}
-          rowHeights={displayTrackOrder.map(() => TRACK_H)}
+          rowHeights={rowHeights}
+          rowGeometry={getTimelineRowGeometry(rowHeights)}
+          virtualRows={displayTrackOrder.map((_, index) => ({ index, rowKey: index }))}
+          rowsVirtualized={false}
           trackOrder={displayTrackOrder}
           tracks={tracks}
           trackStyles={new Map()}
@@ -171,8 +175,10 @@ describe("TimelineLanes track numbering", () => {
       onContextMenuLane,
     });
 
-    // Row children: [sticky header column, time-mapped track content].
-    const rows = Array.from(view.host.children);
+    // Row children: [sticky header column, time-mapped track content]. The rows
+    // sit inside the lanes list, which is what carries the virtualization
+    // positioning context.
+    const rows = Array.from(view.host.querySelectorAll('[role="listitem"]'));
     const secondTrackContent = rows[1]?.children.item(1);
     act(() => {
       secondTrackContent?.dispatchEvent(

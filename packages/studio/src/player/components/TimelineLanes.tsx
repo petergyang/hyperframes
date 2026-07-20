@@ -8,7 +8,7 @@ import { resolveTrackKeyframeClip } from "./useTimelineTrackLayout";
 import { trackDisplayNumber, trackDisplaySuffix } from "./timelineTrackDisplay";
 import { clipTimingStart } from "../../hooks/gsapShared";
 import { getTimelineEditCapabilities, resolveBlockedTimelineEditIntent } from "./timelineEditing";
-import { CLIP_Y, CLIP_HANDLE_W, TRACK_H, getTimelineRowHeight } from "./timelineLayout";
+import { CLIP_Y, CLIP_HANDLE_W, TRACK_H } from "./timelineLayout";
 import { usePlayerStore, type TimelineElement } from "../store/playerStore";
 import {
   isMultiDragPassenger,
@@ -22,6 +22,7 @@ import { trackStudioKeyframeLaneExpand } from "../../telemetry/events";
 import { SPLIT_BOUNDARY_EPSILON_S } from "../../utils/timelineElementSplit";
 import { isAudioTimelineElement, isMusicTrack } from "../../utils/timelineInspector";
 import { renderClipChildren } from "./timelineClipChildren";
+import { TimelineTrackRow } from "./TimelineTrackRow";
 
 interface TimelineLanesProps extends TimelineLaneBaseProps {
   /** Live-derived by TimelineCanvas from {@link TimelineLaneBaseProps.draggedClip}. */
@@ -42,7 +43,9 @@ export function TimelineLanes({
   trackContentWidth,
   theme,
   displayTrackOrder,
-  rowHeights,
+  rowGeometry,
+  virtualRows,
+  rowsVirtualized,
   trackOrder,
   tracks,
   trackStyles,
@@ -104,17 +107,18 @@ export function TimelineLanes({
     toggleClipExpanded(key);
   };
   return (
-    <>
+    <div
+      role="list"
+      aria-label="Timeline tracks"
+      className={rowsVirtualized ? "absolute inset-0" : undefined}
+    >
       {
-        // NOTE (deliberate no-virtualization): lanes and their clips render via a
-        // plain `.map()` inside the scroll container rather than a windowing/virtualized
-        // list. NLE clip counts are small (dozens to low hundreds), so the DOM cost is
-        // bounded and virtualization's complexity isn't worth it. TODO: revisit and swap
-        // in a virtualizer if editorial workflows ever push very high clip counts.
         // fallow-ignore-next-line complexity
-        displayTrackOrder.map((trackNum, row) => {
+        virtualRows.map(({ index: row, rowKey }) => {
+          const trackNum = displayTrackOrder[row];
+          if (trackNum === undefined) return null;
           const displayNumber = trackDisplayNumber(displayTrackOrder, trackNum);
-          const rowHeight = getTimelineRowHeight(row, rowHeights);
+          const rowHeight = rowGeometry.getRowHeight(row);
           const els = tracks.find(([t]) => t === trackNum)?.[1] ?? [];
           const ts = trackStyles.get(trackNum) ?? getTrackStyle("");
           const isPendingTrack =
@@ -146,14 +150,16 @@ export function TimelineLanes({
           // fractional sort key and would mint ids like `...-0.16666666666666666`.
           const lanesId = `${lanesIdPrefix}-track-${row}`;
           return (
-            <div
-              key={trackNum}
-              className="relative flex"
-              style={{
-                height: rowHeight,
-                background: rowBackground,
-                borderBottom: `1px solid ${theme.rowBorder}`,
-              }}
+            <TimelineTrackRow
+              key={rowKey}
+              index={row}
+              rowKey={rowKey}
+              rowCount={displayTrackOrder.length}
+              top={rowGeometry.getRowTop(row)}
+              height={rowHeight}
+              virtualized={rowsVirtualized}
+              background={rowBackground}
+              borderColor={theme.rowBorder}
             >
               <TimelineTrackHeader
                 trackNumber={trackNum}
@@ -520,10 +526,10 @@ export function TimelineLanes({
                   })
                 }
               </div>
-            </div>
+            </TimelineTrackRow>
           );
         })
       }
-    </>
+    </div>
   );
 }
